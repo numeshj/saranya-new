@@ -237,4 +237,150 @@ export class LedgerService {
       },
     };
   }
+
+  async getClassGroupArrearsForMonth(params: {
+    classGroupId: string;
+    year: number;
+    month: number;
+  }) {
+    if (params.month < 1 || params.month > 12) {
+      throw new BadRequestException('Invalid month');
+    }
+    if (params.year < 2000 || params.year > 2100) {
+      throw new BadRequestException('Invalid year');
+    }
+
+    const classGroup = await this.prisma.classGroup.findUnique({
+      where: { id: params.classGroupId },
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        grade: { select: { id: true, name: true } },
+      },
+    });
+
+    if (!classGroup || !classGroup.isActive) {
+      throw new NotFoundException('Class group not found or inactive');
+    }
+
+    const feeRow = await this.prisma.classGroupMonthlyFee.findFirst({
+      where: {
+        classGroupId: params.classGroupId,
+        OR: [
+          { effectiveYear: { lt: params.year } },
+          { effectiveYear: params.year, effectiveMonth: { lte: params.month } },
+        ],
+      },
+      orderBy: [{ effectiveYear: 'desc' }, { effectiveMonth: 'desc' }],
+      select: { effectiveYear: true, effectiveMonth: true, amount: true },
+    });
+
+    if (!feeRow) {
+      throw new BadRequestException(
+        `Monthly fee not configured for ${params.year}-${String(params.month).padStart(2, '0')}`,
+      );
+    }
+
+    const monthAnchor = new Date(Date.UTC(params.year, params.month - 1, 1));
+
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: {
+        classGroupId: params.classGroupId,
+        isActive: true,
+        startDate: { lte: monthAnchor },
+        OR: [{ endDate: null }, { endDate: { gte: monthAnchor } }],
+        student: { isActive: true },
+      },
+      select: {
+        id: true,
+        student: { select: { id: true, fullName: true, phone: true } },
+      },
+    });
+
+    const payments = await this.prisma.payment.findMany({
+      where: {
+        classGroupId: params.classGroupId,
+        paidYear: params.year,
+        paidMonth: params.month,
+      },
+      select: {
+        id: true,
+        studentId: true,
+        amount: true,
+        isFreeCard: true,
+        method: true,
+        source: true,
+        createdAt: true,
+      },
+    });
+
+    const paymentByStudentId = new Map<string, (typeof payments)[number]>();
+    for (const p of payments) {
+      paymentByStudentId.set(p.studentId, p);
+    }
+
+    const fee = feeRow.amount;
+    const rows: Array<{
+      student: { id: string; fullName: string; phone: string | null };
+      fee: Prisma.Decimal;
+      amountDue: Prisma.Decimal;
+      amountPaid: Prisma.Decimal;
+      arrears: Prisma.Decimal;
+      status: 'UNPAID' | 'PAID' | 'FREE_CARD' | 'PARTIAL' | 'OVERPAID';
+      payment?: (typeof payments)[number];
+    }> = [];
+
+    let totalDue = new Prisma.Decimal(0);
+    let totalPaid = new Prisma.Decimal(0);
+    let totalArrears = new Prisma.Decimal(0);
+
+    for (const e of enrollments) {
+      const payment = paymentByStudentId.get(e.student.id);
+      const amountPaid = payment ? payment.amount : new Prisma.Decimal(0);
+      const amountDue = payment?.isFreeCard ? new Prisma.Decimal(0) : fee;
+      const diff = amountDue.minus(amountPaid);
+      const arrears = diff.greaterThan(0) ? diff : new Prisma.Decimal(0);
+
+      let status: (typeof rows)[number]['status'] = 'UNPAID';
+      if (payment?.isFreeCard) status = 'FREE_CARD';
+      else if (amountPaid.equals(0)) status = 'UNPAID';
+      else if (diff.equals(0)) status = 'PAID';
+      else if (diff.greaterThan(0)) status = 'PARTIAL';
+      else status = 'OVERPAID';
+
+      totalDue = totalDue.plus(amountDue);
+      totalPaid = totalPaid.plus(amountPaid);
+      totalArrears = totalArrears.plus(arrears);
+
+      if (arrears.greaterThan(0)) {
+        rows.push({
+          student: e.student,
+          fee,
+          amountDue,
+          amountPaid,
+          arrears,
+          status,
+          payment: payment ?? undefined,
+        });
+      }
+    }
+
+    rows.sort((a, b) => b.arrears.comparedTo(a.arrears));
+
+    return {
+      classGroup,
+      month: { year: params.year, month: params.month },
+      feeAppliedFrom: { year: feeRow.effectiveYear, month: feeRow.effectiveMonth },
+      fee,
+      rows,
+      totals: {
+        studentsEnrolled: enrollments.length,
+        studentsInArrears: rows.length,
+        totalDue,
+        totalPaid,
+        totalArrears,
+      },
+    };
+  }
 }

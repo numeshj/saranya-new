@@ -36,4 +36,18 @@ export class LedgerController {
       toMonth,
     });
   }
+
+  @Get('class-groups/:classGroupId/arrears')
+  @Roles('ADMIN', 'STAFF')
+  async getClassGroupArrearsForMonth(
+    @Param('classGroupId', new ParseUUIDPipe()) classGroupId: string,
+    @Query('year', ParseIntPipe) year: number,
+    @Query('month', ParseIntPipe) month: number,
+  ) {
+    return this.ledger.getClassGroupArrearsForMonth({
+      classGroupId,
+      year,
+      month,
+    });
+  }
 }
