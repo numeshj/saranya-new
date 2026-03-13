@@ -9,8 +9,7 @@ flowchart LR
   %% Actors
   Admin[Admin / Owner]
   Staff[Front Desk / Staff]
-  Teacher[Teacher]
-  Parent[Student / Parent]
+  Parent[Parents / Students]
   Scheduler[[System Scheduler]]
 
   %% System boundary
@@ -65,7 +64,6 @@ flowchart LR
   %% Access relationships
   Admin --> UC_Login
   Staff --> UC_Login
-  Teacher --> UC_Login
   Parent --> UC_Login
 
   %% Admin / Staff setup
@@ -84,11 +82,8 @@ flowchart LR
   Admin --> UC_IssueQR
 
   %% Attendance QR flow
-  Teacher --> UC_SelectSession
   Staff --> UC_SelectSession
-  Teacher --> UC_AttBulk
   Staff --> UC_AttBulk
-  Teacher --> UC_AttEdit
   Staff --> UC_AttEdit
 
   UC_AttBulk -. includes .-> UC_ScanBase
@@ -137,8 +132,7 @@ flowchart LR
 ```mermaid
 flowchart TB
   Staff[Staff]:::actor
-  Teacher[Teacher]:::actor
-  Student[Student shows QR]:::actor
+  Student[Parents/Students show QR]:::actor
 
   subgraph SYS[QR Fast-Lane]
     Scan((Scan Student QR))
@@ -159,10 +153,9 @@ flowchart TB
     end
   end
 
-  Teacher --> PickSession
   Student --> Scan
   Staff --> Scan
-  Teacher --> Scan
+  Staff --> PickSession
 
   Scan --> Identify
 

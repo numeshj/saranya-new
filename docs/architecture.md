@@ -2,6 +2,12 @@
 
 This is a practical, scalable architecture for **Web + Android + iOS** with fast **QR-based attendance and payments**, plus reporting and automated retention.
 
+User levels in this system:
+
+- Admin
+- Staff
+- Parents/Students
+
 ## 1) Logical Architecture (Services + Data)
 
 ```mermaid
@@ -9,8 +15,8 @@ flowchart TB
   %% Clients
   subgraph Clients[Client Apps]
     Web[Web App\n(Admin/Staff)]
-    TApp[Mobile App\n(Teacher)]
-    PApp[Mobile App\n(Student/Parent)]
+    SApp[Mobile App\n(Staff - QR scanner)]
+    PApp[Mobile App\n(Parents/Students)]
   end
 
   %% Identity
@@ -48,11 +54,11 @@ flowchart TB
 
   %% Flows
   Web --> API
-  TApp --> API
+  SApp --> API
   PApp --> API
 
   Web --> IdP
-  TApp --> IdP
+  SApp --> IdP
   PApp --> IdP
   API --> IdP
 
@@ -82,43 +88,43 @@ flowchart TB
 ```mermaid
 sequenceDiagram
   autonumber
-  participant Teacher as Teacher/Staff App (Scanner)
+  participant Staff as Staff Mobile App (Scanner)
   participant API as Backend API
   participant QR as QR Token Service
   participant Att as Attendance Service
   participant Bill as Billing/Payments Service
   participant DB as Relational DB
 
-  Note over Teacher: Attendance (teacher picks session once)
-  Teacher->>API: Select class session (today)
+  Note over Staff: Attendance (staff picks session once)
+  Staff->>API: Select class session (today)
   API->>DB: Load roster + schedule override
   DB-->>API: Session + roster
-  API-->>Teacher: Ready to scan
+  API-->>Staff: Ready to scan
 
-  Teacher->>API: Scan QR token
+  Staff->>API: Scan QR token
   API->>QR: Validate token (active, not replaced)
   QR-->>API: studentId
   API->>Att: Mark Present (studentId, sessionId)
   Att->>DB: Insert attendance record
   DB-->>Att: OK
   Att-->>API: OK
-  API-->>Teacher: Green confirmation (beep)
+  API-->>Staff: Green confirmation (beep)
 
-  Note over Teacher: Payment (staff scan -> pay current or arrears)
-  Teacher->>API: Scan QR token
+  Note over Staff: Payment (scan -> pay current or arrears)
+  Staff->>API: Scan QR token
   API->>QR: Validate token
   QR-->>API: studentId
   API->>Bill: Get dues (current + pending months)
   Bill->>DB: Query fee ledger
   DB-->>Bill: due months + totals
   Bill-->>API: dues
-  API-->>Teacher: Show due + quick actions
-  Teacher->>API: Confirm Pay (current / selected months)
+  API-->>Staff: Show due + quick actions
+  Staff->>API: Confirm Pay (current / selected months)
   API->>Bill: Record payment
   Bill->>DB: Write transaction + mark months paid
   DB-->>Bill: OK
   Bill-->>API: Receipt number
-  API-->>Teacher: Receipt + optional print/send
+  API-->>Staff: Receipt + optional print/send
 ```
 
 ## 3) Deployment View (How it typically runs)
