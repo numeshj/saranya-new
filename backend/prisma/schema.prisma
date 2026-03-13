@@ -24,12 +24,19 @@ enum TeacherChargingModel {
   FREE
 }
 
+enum AttendanceSource {
+  QR_SCAN
+  MANUAL
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
   passwordHash String
   role         UserRole
   isActive     Boolean  @default(true)
+
+  attendanceMarksMarked AttendanceMark[] @relation("AttendanceMarkedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -43,6 +50,7 @@ model Student {
 
   qrTokens     StudentQrToken[]
   enrollments  Enrollment[]
+  attendanceMarks AttendanceMark[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -97,11 +105,49 @@ model ClassGroup {
   teacherId String?
 
   enrollments Enrollment[]
+  attendanceSessions AttendanceSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([gradeId, name])
+}
+
+model AttendanceSession {
+  id           String    @id @default(uuid())
+  sessionDate  DateTime
+  startsAt     DateTime?
+  notes        String?
+  isCancelled  Boolean   @default(false)
+
+  classGroup   ClassGroup @relation(fields: [classGroupId], references: [id])
+  classGroupId String
+
+  marks        AttendanceMark[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([classGroupId, sessionDate])
+  @@unique([classGroupId, sessionDate])
+}
+
+model AttendanceMark {
+  id        String           @id @default(uuid())
+  markedAt  DateTime         @default(now())
+  source    AttendanceSource @default(QR_SCAN)
+
+  session   AttendanceSession @relation(fields: [sessionId], references: [id])
+  sessionId String
+
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+
+  markedByUser   User?   @relation("AttendanceMarkedBy", fields: [markedByUserId], references: [id])
+  markedByUserId String?
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
 }
 
 model Enrollment {
