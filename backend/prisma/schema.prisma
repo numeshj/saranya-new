@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+  PARENT_STUDENT
+}
+
+enum TeacherChargingModel {
+  PER_STUDENT
+  FIXED_MONTHLY
+  FREE
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  isActive     Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Student {
+  id        String   @id @default(uuid())
+  fullName  String
+  phone     String?
+  isActive  Boolean  @default(true)
+
+  qrTokens     StudentQrToken[]
+  enrollments  Enrollment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StudentQrToken {
+  id        String  @id @default(uuid())
+  token     String  @unique
+  isActive  Boolean @default(true)
+
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+
+  issuedAt   DateTime @default(now())
+  replacedAt DateTime?
+}
+
+model Grade {
+  id       String  @id @default(uuid())
+  name     String  @unique
+  isActive Boolean @default(true)
+
+  classGroups ClassGroup[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Teacher {
+  id            String               @id @default(uuid())
+  displayName   String
+  phone         String?
+  chargingModel TeacherChargingModel @default(FREE)
+  perStudentRate     Decimal?
+  fixedMonthlyAmount Decimal?
+
+  classGroups ClassGroup[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ClassGroup {
+  id       String  @id @default(uuid())
+  name     String
+  isActive Boolean @default(true)
+
+  grade   Grade  @relation(fields: [gradeId], references: [id])
+  gradeId String
+
+  teacher   Teacher? @relation(fields: [teacherId], references: [id])
+  teacherId String?
+
+  enrollments Enrollment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gradeId, name])
+}
+
+model Enrollment {
+  id          String    @id @default(uuid())
+  startDate   DateTime  @default(now())
+  endDate     DateTime?
+  isActive    Boolean   @default(true)
+
+  student   Student   @relation(fields: [studentId], references: [id])
+  studentId String
+
+  classGroup   ClassGroup @relation(fields: [classGroupId], references: [id])
+  classGroupId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([classGroupId])
+  @@unique([studentId, classGroupId, startDate])
+}

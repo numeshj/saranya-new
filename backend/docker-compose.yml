@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: saranya_postgres
+    environment:
+      POSTGRES_USER: saranya
+      POSTGRES_PASSWORD: saranya
+      POSTGRES_DB: saranya
+    ports:
+      - "5432:5432"
+    volumes:
+      - saranya_pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: saranya_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  saranya_pgdata:
