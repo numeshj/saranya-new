@@ -1,11 +1,11 @@
 # Backend Dev Setup
 
-This backend is built with **NestJS + Prisma + PostgreSQL**.
+This backend is built with **NestJS + Prisma + MySQL**.
 
 ## 1) Prerequisites
 
 - Node.js (already installed)
-- PostgreSQL running locally **or** Docker Desktop (recommended)
+- MySQL Server running locally **or** Docker Desktop (recommended)
 
 ## 2) Configure environment
 
@@ -14,7 +14,7 @@ This backend is built with **NestJS + Prisma + PostgreSQL**.
 
 Example local DB URL:
 
-- `DATABASE_URL="postgresql://saranya:saranya@localhost:5432/saranya?schema=public"`
+- `DATABASE_URL="mysql://root:228646@localhost:3306/saranya"`
 
 ## 3) Database setup
 
@@ -24,15 +24,17 @@ From `backend/`:
 
 - `docker compose up -d`
 
-### Option B — Local PostgreSQL
+### Option B — Local MySQL
 
-- Create DB `saranya`
-- Create user `saranya` with password `saranya` (or update `.env` accordingly)
+- Install MySQL Server (or XAMPP/WAMP)
+- Ensure MySQL is running on `localhost:3306`
+- You do NOT need to open a SQL console. Use the code-first init step below.
 
 ## 4) Prisma
 
+- Create DB (code-first): `npm --prefix backend run db:init`
 - Generate client: `npm --prefix backend run prisma:generate`
-- Run migrations: `npm --prefix backend run prisma:migrate`
+- Run migrations (code-first schema): `npm --prefix backend run prisma:migrate`
 
 ## 5) Seed first Admin user
 

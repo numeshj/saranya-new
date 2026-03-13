@@ -8,7 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -76,8 +76,8 @@ model Teacher {
   displayName   String
   phone         String?
   chargingModel TeacherChargingModel @default(FREE)
-  perStudentRate     Decimal?
-  fixedMonthlyAmount Decimal?
+  perStudentRate     Decimal? @db.Decimal(10, 2)
+  fixedMonthlyAmount Decimal? @db.Decimal(10, 2)
 
   classGroups ClassGroup[]
 

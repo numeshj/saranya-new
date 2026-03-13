@@ -17,7 +17,7 @@ Recommended: **NestJS (TypeScript)** (structured modules, validation, background
 
 - API: REST (simple + fast for mobile scanning)
 - Auth: OIDC/JWT (role-based access)
-- DB: PostgreSQL (recommended)
+- DB: MySQL (localhost initially)
 - ORM: Prisma
 - Background jobs: BullMQ + Redis
 - File storage (optional): S3-compatible or cloud object storage for exported reports/receipts

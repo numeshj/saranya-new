@@ -1,15 +1,14 @@
 services:
-  postgres:
-    image: postgres:16
-    container_name: saranya_postgres
+  mysql:
+    image: mysql:8.4
+    container_name: saranya_mysql
     environment:
-      POSTGRES_USER: saranya
-      POSTGRES_PASSWORD: saranya
-      POSTGRES_DB: saranya
+      MYSQL_ROOT_PASSWORD: 228646
+      MYSQL_DATABASE: saranya
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - saranya_pgdata:/var/lib/postgresql/data
+      - saranya_mysqldata:/var/lib/mysql
 
   redis:
     image: redis:7
@@ -18,4 +17,4 @@ services:
       - "6379:6379"
 
 volumes:
-  saranya_pgdata:
+  saranya_mysqldata:

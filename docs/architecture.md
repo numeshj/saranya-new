@@ -47,7 +47,7 @@ flowchart TB
 
   %% Data
   subgraph Data[Data Stores]
-    RDB[(Relational DB\nPostgreSQL/MySQL)]
+    RDB[(Relational DB\nMySQL)]
     Files[(Object Storage\nreceipts, exports, attachments)]
     Cache[(Cache\noptional: Redis)]
   end
