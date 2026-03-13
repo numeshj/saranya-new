@@ -120,11 +120,28 @@ model ClassGroup {
   enrollments Enrollment[]
   attendanceSessions AttendanceSession[]
   payments           Payment[]
+  monthlyFees        ClassGroupMonthlyFee[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([gradeId, name])
+}
+
+model ClassGroupMonthlyFee {
+  id             String  @id @default(uuid())
+  effectiveYear  Int
+  effectiveMonth Int
+  amount         Decimal @db.Decimal(10, 2)
+
+  classGroup   ClassGroup @relation(fields: [classGroupId], references: [id])
+  classGroupId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([classGroupId, effectiveYear, effectiveMonth])
+  @@unique([classGroupId, effectiveYear, effectiveMonth])
 }
 
 model Payment {

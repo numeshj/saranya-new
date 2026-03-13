@@ -9,6 +9,8 @@ import { StudentsModule } from './students/students.module';
 import { QrModule } from './qr/qr.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { PaymentsModule } from './payments/payments.module';
+import { FeesModule } from './fees/fees.module';
+import { LedgerModule } from './ledger/ledger.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { PaymentsModule } from './payments/payments.module';
     QrModule,
     AttendanceModule,
     PaymentsModule,
+    FeesModule,
+    LedgerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
