@@ -4,8 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+
+type UserRole = 'ADMIN' | 'STAFF' | 'PARENT_STUDENT';
 
 @Injectable()
 export class UsersService {

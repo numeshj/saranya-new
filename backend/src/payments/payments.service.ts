@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { PaymentMethod, PaymentSource, Prisma } from '@prisma/client';
+import { Decimal, PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../prisma/prisma.service';
 import { QrService } from '../qr/qr.service';
 
@@ -21,7 +21,7 @@ export class PaymentsService {
     paidMonth: number;
     amount?: string;
     isFreeCard?: boolean;
-    method?: PaymentMethod;
+    method?: 'CASH' | 'CARD' | 'BANK_TRANSFER';
     notes?: string;
     createdByUserId?: string;
   }) {
@@ -53,15 +53,15 @@ export class PaymentsService {
     }
 
     const isFreeCard = Boolean(params.isFreeCard);
-    const method = params.method ?? PaymentMethod.CASH;
+    const method = params.method ?? 'CASH';
 
-    let amount = new Prisma.Decimal(0);
+    let amount = new Decimal(0);
     if (!isFreeCard) {
       if (!params.amount) {
         throw new BadRequestException('amount is required unless free card');
       }
 
-      amount = new Prisma.Decimal(params.amount);
+      amount = new Decimal(params.amount);
       if (amount.lessThanOrEqualTo(0)) {
         throw new BadRequestException('amount must be > 0');
       }
@@ -77,7 +77,7 @@ export class PaymentsService {
           amount,
           isFreeCard,
           method,
-          source: PaymentSource.QR_SCAN,
+          source: 'QR_SCAN',
           notes: params.notes,
           createdByUserId: params.createdByUserId ?? null,
         },
@@ -101,7 +101,7 @@ export class PaymentsService {
       };
     } catch (error) {
       if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error instanceof PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
         const existing = await this.prisma.payment.findUnique({

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../prisma/prisma.service';
 
 type YearMonth = { year: number; month: number };
@@ -27,10 +27,10 @@ export class LedgerService {
   constructor(private readonly prisma: PrismaService) {}
 
   private getFeeForMonth(
-    feeRows: Array<{ effectiveYear: number; effectiveMonth: number; amount: Prisma.Decimal }>,
+    feeRows: Array<{ effectiveYear: number; effectiveMonth: number; amount: Decimal }>,
     ym: YearMonth,
-  ): Prisma.Decimal | null {
-    let current: Prisma.Decimal | null = null;
+  ): Decimal | null {
+    let current: Decimal | null = null;
 
     for (const row of feeRows) {
       const rowYm: YearMonth = { year: row.effectiveYear, month: row.effectiveMonth };
@@ -136,9 +136,9 @@ export class LedgerService {
         range: { from: fromYm, to: boundedTo },
         rows: [],
         totals: {
-          totalDue: new Prisma.Decimal(0),
-          totalPaid: new Prisma.Decimal(0),
-          arrears: new Prisma.Decimal(0),
+          totalDue: new Decimal(0),
+          totalPaid: new Decimal(0),
+          arrears: new Decimal(0),
         },
       };
     }
@@ -169,17 +169,17 @@ export class LedgerService {
     const rows: Array<{
       year: number;
       month: number;
-      fee: Prisma.Decimal;
-      amountDue: Prisma.Decimal;
-      amountPaid: Prisma.Decimal;
-      arrears: Prisma.Decimal;
+      fee: Decimal;
+      amountDue: Decimal;
+      amountPaid: Decimal;
+      arrears: Decimal;
       status: 'UNPAID' | 'PAID' | 'FREE_CARD' | 'PARTIAL' | 'OVERPAID';
       payment?: (typeof payments)[number];
     }> = [];
 
-    let totalDue = new Prisma.Decimal(0);
-    let totalPaid = new Prisma.Decimal(0);
-    let totalArrears = new Prisma.Decimal(0);
+    let totalDue = new Decimal(0);
+    let totalPaid = new Decimal(0);
+    let totalArrears = new Decimal(0);
 
     for (let ym = fromYm; compareYearMonth(ym, boundedTo) <= 0; ym = nextMonth(ym)) {
       const fee = this.getFeeForMonth(feeRows, ym);
@@ -190,12 +190,12 @@ export class LedgerService {
       }
 
       const payment = paymentByMonth.get(`${ym.year}-${ym.month}`);
-      const amountPaid = payment ? payment.amount : new Prisma.Decimal(0);
+      const amountPaid = payment ? payment.amount : new Decimal(0);
 
-      const amountDue = payment?.isFreeCard ? new Prisma.Decimal(0) : fee;
+      const amountDue = payment?.isFreeCard ? new Decimal(0) : fee;
 
       const diff = amountDue.minus(amountPaid);
-      const arrears = diff.greaterThan(0) ? diff : new Prisma.Decimal(0);
+      const arrears = diff.greaterThan(0) ? diff : new Decimal(0);
 
       let status: (typeof rows)[number]['status'] = 'UNPAID';
       if (payment?.isFreeCard) status = 'FREE_CARD';
@@ -323,24 +323,24 @@ export class LedgerService {
     const fee = feeRow.amount;
     const rows: Array<{
       student: { id: string; fullName: string; phone: string | null };
-      fee: Prisma.Decimal;
-      amountDue: Prisma.Decimal;
-      amountPaid: Prisma.Decimal;
-      arrears: Prisma.Decimal;
+      fee: Decimal;
+      amountDue: Decimal;
+      amountPaid: Decimal;
+      arrears: Decimal;
       status: 'UNPAID' | 'PAID' | 'FREE_CARD' | 'PARTIAL' | 'OVERPAID';
       payment?: (typeof payments)[number];
     }> = [];
 
-    let totalDue = new Prisma.Decimal(0);
-    let totalPaid = new Prisma.Decimal(0);
-    let totalArrears = new Prisma.Decimal(0);
+    let totalDue = new Decimal(0);
+    let totalPaid = new Decimal(0);
+    let totalArrears = new Decimal(0);
 
     for (const e of enrollments) {
       const payment = paymentByStudentId.get(e.student.id);
-      const amountPaid = payment ? payment.amount : new Prisma.Decimal(0);
-      const amountDue = payment?.isFreeCard ? new Prisma.Decimal(0) : fee;
+      const amountPaid = payment ? payment.amount : new Decimal(0);
+      const amountDue = payment?.isFreeCard ? new Decimal(0) : fee;
       const diff = amountDue.minus(amountPaid);
-      const arrears = diff.greaterThan(0) ? diff : new Prisma.Decimal(0);
+      const arrears = diff.greaterThan(0) ? diff : new Decimal(0);
 
       let status: (typeof rows)[number]['status'] = 'UNPAID';
       if (payment?.isFreeCard) status = 'FREE_CARD';

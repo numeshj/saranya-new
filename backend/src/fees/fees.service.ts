@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -29,7 +29,7 @@ export class FeesService {
       throw new NotFoundException('Class group not found or inactive');
     }
 
-    const amount = new Prisma.Decimal(params.amount);
+    const amount = new Decimal(params.amount);
     if (amount.lessThan(0)) {
       throw new BadRequestException('amount must be >= 0');
     }

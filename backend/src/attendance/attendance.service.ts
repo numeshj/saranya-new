@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, AttendanceSource } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../prisma/prisma.service';
 import { QrService } from '../qr/qr.service';
 
@@ -133,7 +134,7 @@ export class AttendanceService {
         data: {
           sessionId: session.id,
           studentId: student.id,
-          source: AttendanceSource.QR_SCAN,
+          source: 'QR_SCAN',
           markedByUserId: params.markedByUserId ?? null,
         },
         select: {
@@ -150,7 +151,7 @@ export class AttendanceService {
       };
     } catch (error) {
       if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error instanceof PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
         const existing = await this.prisma.attendanceMark.findUnique({

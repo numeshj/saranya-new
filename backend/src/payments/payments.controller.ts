@@ -11,7 +11,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { PaymentMethod } from '@prisma/client';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -37,7 +36,7 @@ export class PaymentsController {
       paidMonth: dto.paidMonth,
       amount: dto.amount,
       isFreeCard: dto.isFreeCard,
-      method: dto.method ? (dto.method as PaymentMethod) : undefined,
+      method: dto.method,
       notes: dto.notes,
       createdByUserId: req.user?.sub,
     });
