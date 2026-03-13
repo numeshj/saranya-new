@@ -29,6 +29,17 @@ enum AttendanceSource {
   MANUAL
 }
 
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+}
+
+enum PaymentSource {
+  QR_SCAN
+  MANUAL
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -37,6 +48,7 @@ model User {
   isActive     Boolean  @default(true)
 
   attendanceMarksMarked AttendanceMark[] @relation("AttendanceMarkedBy")
+  paymentsCreated        Payment[]        @relation("PaymentCreatedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -51,6 +63,7 @@ model Student {
   qrTokens     StudentQrToken[]
   enrollments  Enrollment[]
   attendanceMarks AttendanceMark[]
+  payments        Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -106,11 +119,40 @@ model ClassGroup {
 
   enrollments Enrollment[]
   attendanceSessions AttendanceSession[]
+  payments           Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([gradeId, name])
+}
+
+model Payment {
+  id         String        @id @default(uuid())
+  paidYear   Int
+  paidMonth  Int
+  amount     Decimal       @db.Decimal(10, 2)
+  isFreeCard Boolean       @default(false)
+  method     PaymentMethod @default(CASH)
+  source     PaymentSource @default(QR_SCAN)
+  notes      String?
+
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+
+  classGroup   ClassGroup @relation(fields: [classGroupId], references: [id])
+  classGroupId String
+
+  createdByUser   User?   @relation("PaymentCreatedBy", fields: [createdByUserId], references: [id])
+  createdByUserId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([classGroupId])
+  @@index([paidYear, paidMonth])
+  @@unique([studentId, classGroupId, paidYear, paidMonth])
 }
 
 model AttendanceSession {

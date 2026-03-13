@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { StudentsModule } from './students/students.module';
 import { QrModule } from './qr/qr.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AttendanceModule } from './attendance/attendance.module';
     StudentsModule,
     QrModule,
     AttendanceModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
