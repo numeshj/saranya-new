@@ -143,6 +143,99 @@ export class ExpensesService {
     });
   }
 
+  async summary(params: {
+    from?: string;
+    to?: string;
+    categoryId?: string;
+  }) {
+    const where: any = {};
+
+    if (params.categoryId) {
+      where.categoryId = params.categoryId;
+    }
+
+    if (params.from || params.to) {
+      where.expenseDate = {};
+      if (params.from) {
+        const from = new Date(params.from);
+        if (Number.isNaN(from.getTime())) throw new BadRequestException('Invalid from');
+        where.expenseDate.gte = from;
+      }
+      if (params.to) {
+        const to = new Date(params.to);
+        if (Number.isNaN(to.getTime())) throw new BadRequestException('Invalid to');
+        where.expenseDate.lte = to;
+      }
+    }
+
+    const [overall, byCategoryRaw, byMethodRaw] = await Promise.all([
+      this.prismaAny.expense.aggregate({
+        where,
+        _count: { _all: true },
+        _sum: { amount: true },
+      }),
+      this.prismaAny.expense.groupBy({
+        by: ['categoryId'],
+        where,
+        _count: { _all: true },
+        _sum: { amount: true },
+      }),
+      this.prismaAny.expense.groupBy({
+        by: ['method'],
+        where,
+        _count: { _all: true },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const categoryIds = byCategoryRaw.map((r: any) => r.categoryId);
+    const categories = categoryIds.length
+      ? await this.prismaAny.expenseCategory.findMany({
+          where: { id: { in: categoryIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const categoryNameById = new Map<string, string>(
+      categories.map((c: any) => [c.id, c.name]),
+    );
+
+    const totalAmount: Decimal = overall._sum.amount ?? new Decimal(0);
+    const count: number = overall._count._all ?? 0;
+
+    return {
+      filters: {
+        from: params.from ?? null,
+        to: params.to ?? null,
+        categoryId: params.categoryId ?? null,
+      },
+      totals: {
+        count,
+        amount: totalAmount.toString(),
+      },
+      byCategory: byCategoryRaw
+        .map((r: any) => {
+          const amount: Decimal = r._sum.amount ?? new Decimal(0);
+          return {
+            categoryId: r.categoryId,
+            categoryName: categoryNameById.get(r.categoryId) ?? null,
+            count: r._count._all ?? 0,
+            amount: amount.toString(),
+          };
+        })
+        .sort((a: any, b: any) => Number(b.amount) - Number(a.amount)),
+      byMethod: byMethodRaw
+        .map((r: any) => {
+          const amount: Decimal = r._sum.amount ?? new Decimal(0);
+          return {
+            method: r.method,
+            count: r._count._all ?? 0,
+            amount: amount.toString(),
+          };
+        })
+        .sort((a: any, b: any) => Number(b.amount) - Number(a.amount)),
+    };
+  }
+
   async getExpense(id: string) {
     const expense = await this.prismaAny.expense.findUnique({
       where: { id },

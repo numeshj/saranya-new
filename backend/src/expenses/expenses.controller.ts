@@ -68,6 +68,16 @@ export class ExpensesController {
     return this.expenses.listExpenses({ from, to, categoryId, limit });
   }
 
+  @Get('summary')
+  @Roles('ADMIN', 'STAFF')
+  async summary(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('categoryId') categoryId?: string,
+  ) {
+    return this.expenses.summary({ from, to, categoryId });
+  }
+
   @Get(':id')
   @Roles('ADMIN', 'STAFF')
   async getExpense(@Param('id', new ParseUUIDPipe()) id: string) {
