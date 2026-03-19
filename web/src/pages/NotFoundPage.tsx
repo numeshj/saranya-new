@@ -5,7 +5,7 @@ export function NotFoundPage() {
     <div className="page">
       <div className="card">
         <h1 className="h1">Not found</h1>
-        <Link to="/expenses">Go to Expenses</Link>
+        <Link to="/dashboard">Go to Dashboard</Link>
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ export type Expense = {
   method: PaymentMethod;
   notes?: string | null;
   createdAt: string;
+  updatedAt?: string;
   category: { id: string; name: string };
 };
 
@@ -82,4 +83,26 @@ export async function getSummary(
   params: { from?: string; to?: string; categoryId?: string },
 ): Promise<ExpensesSummary> {
   return apiFetch<ExpensesSummary>('/expenses/summary', { token, query: params });
+}
+
+export async function getExpense(token: string, id: string): Promise<Expense> {
+  return apiFetch<Expense>(`/expenses/${id}`, { token });
+}
+
+export async function updateExpense(
+  token: string,
+  id: string,
+  input: {
+    categoryId?: string;
+    amount?: string;
+    method?: PaymentMethod;
+    expenseDate?: string;
+    notes?: string;
+  },
+): Promise<Expense> {
+  return apiFetch<Expense>(`/expenses/${id}`, { method: 'PATCH', token, body: input });
+}
+
+export async function deleteExpense(token: string, id: string): Promise<{ ok: true }> {
+  return apiFetch<{ ok: true }>(`/expenses/${id}`, { method: 'DELETE', token });
 }

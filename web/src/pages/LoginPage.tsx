@@ -20,7 +20,7 @@ export function LoginPage() {
 
     try {
       await login(email.trim(), password);
-      navigate('/expenses', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -34,7 +34,7 @@ export function LoginPage() {
 
   useEffect(() => {
     if (token) {
-      navigate('/expenses', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   }, [token, navigate]);
 
