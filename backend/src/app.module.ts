@@ -11,6 +11,7 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { PaymentsModule } from './payments/payments.module';
 import { FeesModule } from './fees/fees.module';
 import { LedgerModule } from './ledger/ledger.module';
+import { ExpensesModule } from './expenses/expenses.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { LedgerModule } from './ledger/ledger.module';
     PaymentsModule,
     FeesModule,
     LedgerModule,
+    ExpensesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
